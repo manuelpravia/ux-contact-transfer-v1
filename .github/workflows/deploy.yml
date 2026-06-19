@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, ux-contact-transfer]
+    runs-on: [self-hosted, ux-contact-transfer-v1]
 
     steps:
       - name: Checkout
