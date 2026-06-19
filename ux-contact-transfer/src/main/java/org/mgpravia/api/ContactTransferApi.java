@@ -16,6 +16,8 @@ public class ContactTransferApi implements TransfersApi{
      */
     @Override
     public TransferExecutionResponse executeTransfer(TransferExecutionRequest transferExecutionRequest) {
+
+        System.out.println("Start execute transfer");
         TransferExecutionResponse  transferExecutionResponse = new TransferExecutionResponse();
         transferExecutionResponse.setTransactionId("TRX-987654321");
         transferExecutionResponse.setStatus(TransferExecutionResponse.StatusEnum.SUCCESS);
@@ -37,6 +39,7 @@ public class ContactTransferApi implements TransfersApi{
      */
     @Override
     public ProductValidationResponse validateDestinationContact(String phoneNumber) {
+        System.out.println("Start validate transfer");
         ProductValidationResponse  productValidationResponse = new ProductValidationResponse();
         productValidationResponse.setActive(true);
         productValidationResponse.setCustomerId("CUS123456");
@@ -56,6 +59,7 @@ public class ContactTransferApi implements TransfersApi{
     @Override
     public TransferVerificationResponse verifyTransfer(TransferVerificationRequest transferVerificationRequest) {
 
+        System.out.println("Start verify transfer");
         TransferVerificationResponse transferVerificationResponse = new TransferVerificationResponse();
         transferVerificationResponse.setTransferAllowed(true);
         transferVerificationResponse.setVerificationId("VER-202506170001");
