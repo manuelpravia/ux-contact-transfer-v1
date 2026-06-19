@@ -1,0 +1,279 @@
+openapi: 3.0.3
+
+info:
+  title: Contact Transfer API
+  version: 1.0.0
+  description: API para realizar transferencias mediante número de celular.
+
+tags:
+  - name: Transfers
+    description: Operaciones de transferencias por contacto
+
+paths:
+
+  /transfers/product:
+    get:
+      tags:
+        - Transfers
+      summary: Validar número celular destino
+      description: Verifica que el número de celular exista y se encuentre activo para recibir transferencias.
+      operationId: validateDestinationContact
+
+      parameters:
+        - name: phoneNumber
+          in: query
+          required: true
+          description: Número celular destino
+          schema:
+            type: string
+            example: "987654321"
+
+      responses:
+        "200":
+          description: Número validado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductValidationResponse"
+
+        "404":
+          description: Número no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "422":
+          description: Número inactivo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /transfers/verify:
+    post:
+      tags:
+        - Transfers
+      summary: Verificar transferencia
+      description: Valida autenticación, saldo disponible y reglas de negocio antes de ejecutar la transferencia.
+      operationId: verifyTransfer
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferVerificationRequest"
+
+      responses:
+        "200":
+          description: Transferencia válida para ejecución
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferVerificationResponse"
+
+        "401":
+          description: Usuario no autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "409":
+          description: Saldo insuficiente o regla de negocio incumplida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /transfers/execute:
+    post:
+      tags:
+        - Transfers
+      summary: Ejecutar transferencia
+      description: Ejecuta la transferencia previamente validada.
+      operationId: executeTransfer
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferExecutionRequest"
+
+      responses:
+        "201":
+          description: Transferencia realizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferExecutionResponse"
+
+        "400":
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "409":
+          description: La transferencia ya fue procesada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    ProductValidationResponse:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: "987654321"
+
+        customerId:
+          type: string
+          example: "CUS123456"
+
+        customerName:
+          type: string
+          example: "Juan Perez"
+
+        active:
+          type: boolean
+          example: true
+
+    TransferVerificationRequest:
+      type: object
+      required:
+        - sourceAccount
+        - destinationPhoneNumber
+        - amount
+
+      properties:
+        sourceAccount:
+          type: string
+          example: "001123456789"
+
+        destinationPhoneNumber:
+          type: string
+          example: "987654321"
+
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 250.50
+
+        currency:
+          type: string
+          example: "PEN"
+
+        description:
+          type: string
+          example: "Pago de deuda"
+
+    TransferVerificationResponse:
+      type: object
+      properties:
+        verificationId:
+          type: string
+          example: "VER-202506170001"
+
+        authenticated:
+          type: boolean
+          example: true
+
+        sufficientBalance:
+          type: boolean
+          example: true
+
+        availableBalance:
+          type: number
+          format: double
+          example: 5000.00
+
+        transferAllowed:
+          type: boolean
+          example: true
+
+        expirationDateTime:
+          type: string
+          format: date-time
+          example: "2026-06-17T20:00:00Z"
+
+    TransferExecutionRequest:
+      type: object
+      required:
+        - verificationId
+
+      properties:
+        verificationId:
+          type: string
+          example: "VER-202506170001"
+
+    TransferExecutionResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          example: "TRX-987654321"
+
+        status:
+          type: string
+          enum:
+            - SUCCESS
+
+        sourceAccount:
+          type: string
+          example: "001123456789"
+
+        destinationPhoneNumber:
+          type: string
+          example: "987654321"
+
+        amount:
+          type: number
+          format: double
+          example: 250.50
+
+        currency:
+          type: string
+          example: "PEN"
+
+        transactionDateTime:
+          type: string
+          format: date-time
+          example: "2026-06-17T18:15:30Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "TRANSFER_001"
+
+        message:
+          type: string
+          example: "Saldo insuficiente"
+
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-06-17T18:15:30Z"

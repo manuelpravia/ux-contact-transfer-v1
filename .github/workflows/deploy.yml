@@ -1,0 +1,56 @@
+name: Deploy Token Api
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, ux-contact-transfer]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: vars
+        run: echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Make mvn executable
+        working-directory: ux-contact-transfer
+        run: chmod +x mvnw
+
+      - name: Build quarkus app
+        working-directory: ux-contact-transfer
+        run: ./mvnw clean package -DskipTests
+
+      - name: Build image
+        working-directory: ux-contact-transfer
+        run: podman build  --no-cache -t localhost/ux-contact-transfer:$(TAG) .
+
+      - name: Save image
+        run: podman save localhost/ux-contact-transfer:$(TAG) -o ux-contact-transfer.tar
+
+      - name: Import into k3s
+        run: sudo k3s ctr import ux-contact-transfer.tar
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace cqrs-lab \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply kubernetes manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml -n cqrs-lab
+          kubectl apply -f k8s/service.yaml -n cqrs-lab
+
+      - name: Update deployment image
+        run: |
+          kubectl set image deployment/ux-contact-transfer \
+          ux-contact-transfer=localhost/ux-contact-transfer:$(TAG) -n cqrs-lab
+
+      - name: Restart rollout
+        run: |
+          kubectl rollout status deployment/ux-contact-transfer -n cqrs-lab

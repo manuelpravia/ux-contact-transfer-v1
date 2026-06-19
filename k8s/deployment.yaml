@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ux-contact-transfer
+  labels:
+    app: ux-contact-transfer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ux-contact-transfer
+  template:
+    metadata:
+      labels:
+        app: ux-contact-transfer
+    spec:
+      containers:
+        - name: ux-contact-transfer
+          image: localhost/ux-contact-transfer:1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8084
