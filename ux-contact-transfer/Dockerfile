@@ -5,4 +5,4 @@ WORKDIR /app
 COPY target/quarkus-app/ /app/
 EXPOSE 8084
 
-ENTRYPOINT["java", "-jar", "quarkus-run.jar"]
+ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]
