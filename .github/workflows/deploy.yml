@@ -34,7 +34,7 @@ jobs:
         run: podman save localhost/ux-contact-transfer:${TAG} -o ux-contact-transfer.tar
 
       - name: Import into k3s
-        run: sudo k3s ctr import ux-contact-transfer.tar
+        run: sudo k3s ctr images import ux-contact-transfer.tar
 
       - name: Create namespace
         run: |
